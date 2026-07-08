@@ -6,7 +6,7 @@ A web-based Employee Management System developed using **Python Django** to impr
 
 ##  Overview
 
-Smart Employee Wellness and Productivity Assistant is a BCA major project that combines traditional employee management with intelligent wellness monitoring.
+Smart Employee Wellness and Productivity Assistant is that combines traditional employee management with intelligent wellness monitoring.
 
 The system helps organizations:
 
