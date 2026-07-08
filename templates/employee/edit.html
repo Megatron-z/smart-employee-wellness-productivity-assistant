@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-user-pen me-2"></i> Edit Employee Profile</h4>
+            <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary btn-sm"><i
+                    class="fa-solid fa-arrow-left me-1"></i> Back to Directory</a>
+        </div>
+
+        <div class="dashboard-card p-4 shadow-sm border-0">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold small">Employee ID</label>
+                        <input type="text" class="form-control bg-light" value="{{ employee.emp_id }}" disabled>
+                        <div class="extra-small text-muted mt-1 italic">ID cannot be changed</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold small">Full Name</label>
+                        <input type="text" name="name" class="form-control shadow-sm" required value="{{ employee.name }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold small">Department</label>
+                        <select name="department" class="form-select shadow-sm" required>
+                            <option value="Engineering" {% if employee.department == 'Engineering' %}selected{% endif %}>Engineering</option>
+                            <option value="Marketing" {% if employee.department == 'Marketing' %}selected{% endif %}>Marketing</option>
+                            <option value="Sales" {% if employee.department == 'Sales' %}selected{% endif %}>Sales</option>
+                            <option value="HR" {% if employee.department == 'HR' %}selected{% endif %}>Human Resources</option>
+                            <option value="Finance" {% if employee.department == 'Finance' %}selected{% endif %}>Finance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold small">Designation</label>
+                        <input type="text" name="designation" class="form-control shadow-sm" required
+                            value="{{ employee.designation }}">
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label text-muted fw-bold small">Joining Date</label>
+                        <input type="date" name="joining_date" class="form-control shadow-sm" required 
+                               value="{{ employee.joining_date|date:'Y-m-d' }}">
+                    </div>
+
+                    <div class="col-md-12 mt-5">
+                        <div class="d-flex justify-content-between align-items-center">
+                             <button type="button" class="btn btn-outline-danger btn-sm px-4" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fa-solid fa-trash-can me-2"></i> Delete Employee
+                            </button>
+                            <button type="submit" class="btn btn-custom px-5 shadow"><i class="fa-solid fa-save me-2"></i> Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold">Confirm Deletion</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="fa-solid fa-triangle-exclamation text-danger mb-3" style="font-size: 3rem;"></i>
+        <h5>Are you sure?</h5>
+        <p class="text-muted">You are about to delete <strong>{{ employee.name }}</strong>'s profile and user account. This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <a href="{% url 'employee_delete' employee.emp_id %}" class="btn btn-danger px-4">Delete Permanently</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

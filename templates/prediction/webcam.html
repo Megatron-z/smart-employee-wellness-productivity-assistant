@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold"><i class="fa-solid fa-camera text-primary me-2"></i> AI Wellness Scanner</h3>
+    <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Dashboard</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="dashboard-card p-4 h-100 d-flex flex-column align-items-center justify-content-center bg-dark text-white rounded-4 overflow-hidden position-relative">
+            <video id="webcam" autoplay playsinline class="w-100 rounded-3 shadow-sm border border-secondary" style="max-height: 480px; object-fit: cover;"></video>
+            <canvas id="canvas" class="d-none"></canvas>
+            
+            <button id="captureBtn" class="btn btn-lg btn-custom mt-4 px-5 rounded-pill shadow-lg" style="z-index: 10;">
+                <i class="fa-solid fa-expand me-2"></i> Scan Emotion
+            </button>
+            
+            <!-- Scanning Overlay -->
+            <div id="scanOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background: rgba(0,0,0,0.6); z-index: 5;">
+                <div class="text-center text-accent">
+                    <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status"></div>
+                    <h5 class="mt-3 fw-bold tracking-widest">ANALYZING FACE...</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="dashboard-card p-4 h-100 d-flex flex-column">
+            <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="fa-solid fa-microchip text-accent me-2"></i> Real-time Results</h5>
+            
+            <div id="resultsPanel" class="text-center mt-auto mb-auto opacity-50">
+                <i class="fa-solid fa-user-shield fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Awaiting Scan</h5>
+                <p class="small text-muted mb-0">Position your face clearly in the frame and click scan.</p>
+            </div>
+
+            <!-- Populated after scan -->
+            <div id="activeResults" class="d-none mt-4 text-center fade-in flex-grow-1">
+                <div class="mb-4">
+                    <p class="text-muted fw-bold mb-1 small tracking-widest text-uppercase">Primary Emotion</p>
+                    <h1 class="fw-bold display-4 mb-0 text-primary" id="resEmotion">--</h1>
+                </div>
+
+                <div class="row mt-4 pt-3 border-top g-0">
+                    <div class="col-6 border-end py-2">
+                        <p class="text-muted fw-bold mb-1 extra-small">STRESS SCORE</p>
+                        <h3 class="fw-bold mb-0" id="resStressScore">--/10</h3>
+                    </div>
+                    <div class="col-6 py-2">
+                        <p class="text-muted fw-bold mb-1 extra-small">INTERPRETATION</p>
+                        <h6 class="fw-bold mb-0" id="resInterpretation">--</h6>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-top text-start">
+                    <p class="text-muted fw-bold mb-3 small tracking-widest text-uppercase">Emotion Probabilities</p>
+                    <div id="emotionBars" class="small">
+                        <!-- Dynamic bars will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .extra-small { font-size: 0.65rem; }
+    .tracking-widest { letter-spacing: 0.15em; }
+    .progress-minimal {
+        height: 6px;
+        background-color: #f1f5f9;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .progress-minimal .progress-bar {
+        border-radius: 10px;
+        transition: width 1s ease-in-out;
+    }
+    .emotion-row {
+        margin-bottom: 12px;
+    }
+    .emotion-label {
+        width: 70px;
+        display: inline-block;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: capitalize;
+    }
+</style>
+
+<script>
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const scanOverlay = document.getElementById('scanOverlay');
+    
+    // Start webcam
+    async function initWebcam() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            video.srcObject = stream;
+        } catch (err) {
+            console.error("Error accessing webcam: ", err);
+            alert("Could not access webcam. Please ensure you have granted permissions.");
+        }
+    }
+    
+    initWebcam();
+
+    captureBtn.addEventListener('click', () => {
+        // Show scan overlay
+        scanOverlay.classList.remove('d-none');
+        scanOverlay.classList.add('d-flex');
+        captureBtn.disabled = true;
+        
+        // Hide previous results
+        document.getElementById('activeResults').classList.add('d-none');
+        document.getElementById('resultsPanel').classList.remove('d-none');
+        
+        // Draw video frame to canvas
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Get base64 string
+        const imageData = canvas.toDataURL('image/jpeg');
+        
+        // Send to backend
+        fetch("{% url 'emotion_analyze_api' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' // Standard django if not completely exempt
+            },
+            body: JSON.stringify({ image: imageData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide scan overlay
+            scanOverlay.classList.add('d-none');
+            scanOverlay.classList.remove('d-flex');
+            captureBtn.disabled = false;
+            
+            if(data.error) {
+                alert("Analysis failed: " + data.error);
+                return;
+            }
+            
+            // Show active results
+            document.getElementById('resultsPanel').classList.add('d-none');
+            document.getElementById('activeResults').classList.remove('d-none');
+            
+            // Populate
+            document.getElementById('resEmotion').innerText = data.emotion;
+            
+            const stressScoreEl = document.getElementById('resStressScore');
+            stressScoreEl.innerText = data.stress_score + '/10';
+            
+            const interpEl = document.getElementById('resInterpretation');
+            interpEl.innerText = data.interpretation;
+            
+            // Render Emotion Bars
+            const barsContainer = document.getElementById('emotionBars');
+            barsContainer.innerHTML = '';
+            
+            if(data.raw_scores) {
+                // Sort emotions by score descending
+                const sortedEmotions = Object.entries(data.raw_scores).sort((a,b) => b[1] - a[1]);
+                
+                sortedEmotions.forEach(([emotion, score]) => {
+                    const row = document.createElement('div');
+                    row.className = 'emotion-row';
+                    
+                    // Determine color
+                    let color = 'bg-primary';
+                    if(['angry', 'fear'].includes(emotion)) color = 'bg-danger';
+                    if(['neutral', 'surprise'].includes(emotion)) color = 'bg-info';
+                    if(emotion === 'happy') color = 'bg-success';
+                    if(['sad', 'disgust'].includes(emotion)) color = 'bg-warning';
+
+                    row.innerHTML = `
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="emotion-label">${emotion}</span>
+                            <span class="fw-bold">${score}%</span>
+                        </div>
+                        <div class="progress-minimal">
+                            <div class="progress-bar ${color}" style="width: 0%"></div>
+                        </div>
+                    `;
+                    barsContainer.appendChild(row);
+                    
+                    // Animate width
+                    setTimeout(() => {
+                        row.querySelector('.progress-bar').style.width = score + '%';
+                    }, 50);
+                });
+            }
+            
+            // Styling based on stress
+            if(data.stress_score >= 8) {
+                stressScoreEl.className = 'fw-bold text-danger';
+                interpEl.className = 'fw-bold extra-small text-danger';
+            } else if (data.stress_score >= 5) {
+                stressScoreEl.className = 'fw-bold text-warning';
+                interpEl.className = 'fw-bold extra-small text-warning';
+            } else {
+                stressScoreEl.className = 'fw-bold text-success';
+                interpEl.className = 'fw-bold extra-small text-success';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Network error occurred.");
+            scanOverlay.classList.add('d-none');
+            scanOverlay.classList.remove('d-flex');
+            captureBtn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}

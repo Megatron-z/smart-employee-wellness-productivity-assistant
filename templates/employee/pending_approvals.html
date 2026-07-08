@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card p-4 fade-in">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">Pending Approvals</h2>
+                    <p class="text-muted">Review and approve new employee registrations</p>
+                </div>
+                <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Fleet
+                </a>
+            </div>
+
+            {% if pending_users %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User Details</th>
+                            <th>EMP ID</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th>Identity Verification</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in pending_users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-placeholder me-2" style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #64748b;">
+                                        {{ user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ user.employee_profile.name }}</div>
+                                        <div class="small text-muted">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ user.employee_profile.emp_id }}</span></td>
+                            <td>{{ user.employee_profile.department }}</td>
+                            <td>
+                                <span class="badge {% if user.role == 'admin' %}bg-danger{% else %}bg-primary{% endif %}">
+                                    {{ user.role|capfirst }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.employee_profile.face_embedding %}
+                                    <span class="text-success small fw-bold"><i class="fa-solid fa-face-smile me-1"></i> Facial Data Ready</span>
+                                {% elif user.employee_profile.profile_pic %}
+                                    <span class="text-info small fw-bold"><i class="fa-solid fa-image me-1"></i> Profile Pic Uploaded</span>
+                                {% else %}
+                                    <div class="d-flex flex-column">
+                                        <span class="text-warning small fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> No Identity Data</span>
+                                        <span class="text-muted" style="font-size: 0.75rem;">AI Extraction Failed during Signup</span>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form action="{% url 'approve_user' user.id %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm px-3">
+                                        <i class="fa-solid fa-check-circle me-1"></i> Approve
+                                    </button>
+                                </form>
+                                <form action="{% url 'reject_user_registration' user.id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to REJECT this registration? The account will be deleted.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm px-3 ms-1">
+                                        <i class="fa-solid fa-times-circle me-1"></i> Reject
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fa-solid fa-user-check fa-4x text-light mb-3"></i>
+                <h4 class="text-muted">No pending registrations</h4>
+                <p class="text-muted small">Everything is up to date!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

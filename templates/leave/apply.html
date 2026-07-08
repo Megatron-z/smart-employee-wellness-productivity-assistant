@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="dashboard-card p-4">
+            <h3 class="fw-bold mb-4"><i class="fa-solid fa-calendar-plus me-2 text-primary"></i> Apply for Leave</h3>
+            <p class="text-muted small">Please provide the dates and a brief reason for your leave request.</p>
+
+            <form method="POST" class="mt-4">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">End Date</label>
+                        <input type="date" name="end_date" id="end_date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Reason for Leave</label>
+                    <textarea name="reason" class="form-control" rows="4" placeholder="e.g. Family emergency, medical leave, vacation..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-custom w-100 py-3 fw-bold">
+                    Submit Leave Request
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const today = new Date();
+
+// Format YYYY-MM-DD
+function formatDate(d) {
+    return d.toISOString().split('T')[0];
+}
+
+//  Set limits
+let minDate = formatDate(today);
+
+// Max = 1 year from today (you can change)
+let maxDateObj = new Date();
+maxDateObj.setFullYear(today.getFullYear() + 1);
+let maxDate = formatDate(maxDateObj);
+
+const startInput = document.getElementById("start_date");
+const endInput = document.getElementById("end_date");
+
+// Apply limits
+startInput.min = minDate;
+startInput.max = maxDate;
+
+endInput.min = minDate;
+endInput.max = maxDate;
+
+// Ensure end >= start
+startInput.addEventListener("change", function() {
+    endInput.min = this.value;
+});
+</script>
+
+{% endblock %}

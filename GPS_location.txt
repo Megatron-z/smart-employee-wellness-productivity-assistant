@@ -1,0 +1,67 @@
+
+
+GPS_location office:
+(Received Precise Coordinates from Browser:)
+
+Latitude: 8.560520876597208
+Longitude: 76.87984054119097
+RADIUS (METERS) : 100.0
+
+OFFICE WIFI SSID : Srishti Innovative-5G
+
+Precise GPS from Browser: Latitude: 8.560526073884617, Longitude: 76.87985254711697
+
+Precise GPS from Browser: Latitude: 8.560518002295609, Longitude: 76.87983183257447
+
+Precise GPS from Browser: Latitude: 8.992048, Longitude: 76.870155
+
+Precise GPS from Browser: Latitude: 8.992048, Longitude: 76.870155
+
+Precise GPS from Browser: Latitude: 8.560508492521796, Longitude: 76.87982692301343
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 10.0037578, Longitude: 76.3579401
+
+
+Precise GPS from Browser: Latitude: 10.0444889, Longitude: 76.2218394
+
+Precise GPS from Browser: Latitude: 9.9664665, Longitude: 76.3145188
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 8.909034, Longitude: 76.6816962
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 8.909034, Longitude: 76.6816962
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9312328, Longitude: 76.2673041
+
+Precise GPS from Browser: Latitude: 9.9406, Longitude: 76.2653

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold"><i class="fa-solid fa-chart-pie text-primary me-2"></i> AI Performance Analysis</h3>
+    <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i>
+        Directory</a>
+</div>
+
+<div class="row g-4">
+    <!-- Employee Profile Info -->
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 text-center h-100">
+            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3"
+                style="width: 80px; height: 80px; font-size: 2rem; font-weight: bold;">
+                {{ employee.name|make_list|first|upper }}
+            </div>
+            <h4 class="fw-bold">{{ employee.name }}</h4>
+            <p class="text-muted mb-2">{{ employee.designation }} &bull; {{ employee.department }}</p>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <span class="badge bg-light text-dark border w-100 py-2 rounded-pill small"><i class="fa-solid fa-id-badge me-1"></i> ID: {{ employee.emp_id }}</span>
+                </div>
+                <div class="col-6">
+                    <span class="badge {% if prod_trend == 'Improving' %}bg-success{% elif prod_trend == 'Declining' %}bg-danger{% else %}bg-info{% endif %} text-white w-100 py-2 rounded-pill small">
+                        <i class="fa-solid fa-chart-line me-1"></i> {{ prod_trend }}
+                    </span>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-start">
+                <p class="mb-1 fw-bold text-muted small"><i class="fa-solid fa-calendar me-2"></i> JOINED</p>
+                <p>{{ employee.joining_date }}</p>
+                <p class="mb-1 fw-bold text-muted small"><i class="fa-solid fa-money-check-dollar me-2"></i> LATEST
+                    PAYROLL</p>
+                {% if payroll %}
+                <p class="text-success fw-bold">₹{{ payroll.total_salary }}</p>
+                {% else %}
+                <p class="text-muted fst-italic">Pending Calculation</p>
+                {% endif %}
+            </div>
+
+            <button id="runAiBtn" class="btn btn-custom w-100 mt-4 py-2">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Run Deep Analysis
+            </button>
+        </div>
+    </div>
+
+    <!-- Wellness History & AI Prediction Panel -->
+    <div class="col-md-8">
+        <!-- AI Prediction Results -->
+        <div class="dashboard-card p-4 border-primary border-2 mb-4 d-none" id="predictionResultsCard"
+            style="border-style: solid;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-primary m-0"><i class="fa-solid fa-robot me-2"></i> ML Prediction Results</h5>
+                <span class="badge bg-success" id="predTime">Just Now</span>
+            </div>
+            <div class="row text-center mt-4">
+                <div class="col-md-3 border-end">
+                    <p class="text-muted fw-bold mb-1 small tracking-widest" style="font-size: 0.75rem;">STRESS SCORE</p>
+                    <h2 class="fw-bold" id="resStress">--/10</h2>
+                </div>
+                <div class="col-md-3 border-end">
+                    <p class="text-muted fw-bold mb-1 small tracking-widest" style="font-size: 0.75rem;">BURNOUT RISK</p>
+                    <h2 class="fw-bold" id="resBurnout">--</h2>
+                </div>
+                <div class="col-md-3 border-end">
+                    <p class="text-muted fw-bold mb-1 small tracking-widest" style="font-size: 0.75rem;">WELLNESS</p>
+                    <h2 class="fw-bold text-success" id="resWellness">--/100</h2>
+                </div>
+                <div class="col-md-3">
+                    <p class="text-muted fw-bold mb-1 small tracking-widest" style="font-size: 0.75rem;">WORK PATTERN</p>
+                    <h2 class="fw-bold text-info" id="resAnomaly">--</h2>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="fw-bold text-dark"><i class="fa-solid fa-lightbulb text-warning me-2"></i> AI Recommendations
+                </h6>
+                <div id="aiRecommendations" class="mt-3">
+                    <!-- JS fills this -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Wellness Table -->
+        <div class="dashboard-card p-0 h-100">
+            <div class="card-header-styled bg-white text-dark border-bottom">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-clock-rotate-left text-muted me-2"></i> Recent Activity
+                    Logs</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Date</th>
+                            <th>Hours</th>
+                            <th>Mental Fatigue</th>
+                            <th>Self-Reported Mood</th>
+                            <th>Stress Log</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in wellness_logs %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-secondary">{{ log.date }}</td>
+                            <td>{{ log.hours_worked }} hr</td>
+                            <td>{{ log.mental_fatigue }}/10</td>
+                            <td>
+                                {% if log.mood == 'Happy' %}
+                                <span class="badge bg-success">{{ log.mood }}</span>
+                                {% elif log.mood == 'Neutral' %}
+                                <span class="badge bg-secondary">{{ log.mood }}</span>
+                                {% else %}
+                                <span class="badge bg-danger">{{ log.mood }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.stress_score }}/10</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted fst-italic">No wellness records logged
+                                yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('runAiBtn').addEventListener('click', function () {
+        // Collect latest data to send for prediction
+        // Extracting from the latest log if available
+        let latestLog = null;
+        {% if wellness_logs %}
+        latestLog = {
+            emp_id: "{{ employee.emp_id }}",
+            hours_worked: parseFloat("{{ wellness_logs.0.hours_worked | default:'40' }}"),
+            mental_fatigue: parseFloat("{{ wellness_logs.0.mental_fatigue | default:'5' }}"),
+            break_time: parseFloat("{{ wellness_logs.0.break_time | default:'1' }}"),
+            basic: parseFloat("{{ payroll.basic | default:'5000' }}"),
+            hra: parseFloat("{{ payroll.hra | default:'1500' }}"),
+            ta: parseFloat("{{ payroll.ta | default:'500' }}"),
+            da: parseFloat("{{ payroll.da | default:'500' }}")
+        };
+        {% else %}
+        latestLog = {
+            emp_id: "{{ employee.emp_id }}",
+            hours_worked: 40,
+            mental_fatigue: 5,
+            break_time: 1,
+            basic: parseFloat("{{ payroll.basic | default:'5000' }}"),
+            hra: parseFloat("{{ payroll.hra | default:'1500' }}"),
+            ta: parseFloat("{{ payroll.ta | default:'500' }}"),
+            da: parseFloat("{{ payroll.da | default:'500' }}")
+        };
+        {% endif %}
+
+        // Visual feedback
+        this.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Analyzing...';
+        this.disabled = true;
+
+        fetch("{% url 'predict_api' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(latestLog)
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Revert button
+                this.innerHTML = '<i class="fa-solid fa-rotate-right me-2"></i> Re-Run Analysis';
+                this.disabled = false;
+
+                if (data.error) {
+                    alert("Prediction failed: " + data.error);
+                    return;
+                }
+
+                // Update UI
+                document.getElementById('predictionResultsCard').classList.remove('d-none');
+
+                // Set values
+                const stress = data.stress;
+                const burnout = data.burnout;
+                const prod = data.productivity;
+                const anomalyScore = data.anomaly_score;
+                const wellnessScore = data.wellness_score;
+                const recs = data.recommendations;
+
+                const stressEl = document.getElementById('resStress');
+                stressEl.innerText = stress + '/10';
+                if (stress > 7) stressEl.className = 'fw-bold text-danger';
+                else if (stress > 5) stressEl.className = 'fw-bold text-warning';
+                else stressEl.className = 'fw-bold text-success';
+
+                const burnoutEl = document.getElementById('resBurnout');
+                burnoutEl.innerText = burnout;
+                burnoutEl.className = burnout === 'High Risk' ? 'fw-bold text-danger' : 'fw-bold text-success';
+
+                const wellnessEl = document.getElementById('resWellness');
+                wellnessEl.innerText = wellnessScore + '/100';
+                if (wellnessScore >= 80) wellnessEl.className = 'fw-bold text-success';
+                else if (wellnessScore >= 60) wellnessEl.className = 'fw-bold text-primary';
+                else wellnessEl.className = 'fw-bold text-warning';
+                
+                const anomalyEl = document.getElementById('resAnomaly');
+                if (data.anomaly_risk.includes("High Risk")) {
+                    anomalyEl.innerText = 'Unusual';
+                    anomalyEl.className = 'fw-bold text-danger';
+                } else {
+                    anomalyEl.innerText = 'Normal';
+                    anomalyEl.className = 'fw-bold text-success';
+                }
+
+                // Render Server recommendations
+                const recCont = document.getElementById('aiRecommendations');
+                recCont.innerHTML = '';
+                
+                let html = '';
+                recs.forEach(r => {
+                    if(r.includes("overtime") || r.includes("burnout") || r.includes("Unusual")) {
+                        html += `<div class="alert alert-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i> ${r}</div>`;
+                    } else if (r.includes("Keep up") || r.includes("No immediate")) {
+                        html += `<div class="alert alert-success"><i class="fa-solid fa-check-circle me-2"></i> ${r}</div>`;
+                    } else {
+                        html += `<div class="alert alert-warning"><i class="fa-solid fa-circle-exclamation me-2"></i> ${r}</div>`;
+                    }
+                });
+
+                recCont.innerHTML = html;
+            })
+            .catch(err => {
+                console.error(err);
+                alert("An error occurred while connecting to the AI core.");
+                this.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-2"></i> Run Deep Analysis';
+                this.disabled = false;
+            });
+    });
+</script>
+{% endblock %}

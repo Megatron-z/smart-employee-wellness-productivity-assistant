@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" x-data="{ darkMode: false, showAuth: false, showChat: false, authMode: 'login' }" x-init="darkMode = (localStorage.getItem('sewpa_theme') === 'dark')">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEWPA | Extreme Wellness Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;500;800&family=JetBrains+Mono:wght@500&display=swap');
+        
+        [x-cloak] { display: none !important; }
+        
+        /* Global Transitions */
+        body { 
+            font-family: 'Bricolage Grotesque', sans-serif; 
+            transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s ease; 
+            overflow-x: hidden; 
+        }
+        
+        /* Canvas behavior for different modes */
+        #nebula-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: -1; 
+            transition: filter 0.8s ease;
+        }
+
+        /* Glassmorphism 2.0 - Adaptive */
+        .glass-ultra {
+            background: rgba(255, 255, 255, 0.015);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.5s ease;
+        }
+
+        .light-mode .glass-ultra {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            color: #0f172a;
+        }
+
+        /* Extreme Button Physics */
+        .btn-extreme {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-extreme:hover {
+            letter-spacing: 2px;
+            box-shadow: 0 0 50px rgba(99, 102, 241, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* Animation for Gradient Text */
+        .animate-gradient {
+            background: linear-gradient(to right, #6366f1, #a855f7, #6366f1);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientMove 3s linear infinite;
+        }
+        @keyframes gradientMove { to { background-position: 200% center; } }
+
+        /* Floating Animation */
+        .float-xl { animation: floatXL 8s ease-in-out infinite; }
+        @keyframes floatXL {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        /* Theme Specific Adjustments */
+        .light-mode .text-gray-400 { color: #64748b; }
+        .light-mode #nebula-canvas { filter: invert(1) brightness(1.2) opacity(0.2); }
+    </style>
+</head>
+<body :class="darkMode ? 'bg-[#010204] text-white' : 'bg-slate-50 text-slate-900 light-mode'">
+
+    <canvas id="nebula-canvas"></canvas>
+
+    <nav class="fixed w-full z-50 p-6">
+        <div class="max-w-7xl mx-auto glass-ultra rounded-[2rem] p-4 flex justify-between items-center px-10 border-white/5">
+            <div class="flex items-center gap-4">
+                <span class="font-bold tracking-tighter text-2xl animate-gradient">SEWPA</span>
+                <span class="h-4 w-[1px] bg-gray-500/30"></span>
+                <span class="text-[10px] font-mono tracking-widest opacity-50 uppercase">v3.0.4-Beta</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <button @click="darkMode = !darkMode; localStorage.setItem('sewpa_theme', darkMode ? 'dark' : 'light')" 
+                        class="w-12 h-12 rounded-full glass-ultra flex items-center justify-center hover:scale-110 transition-all duration-500 shadow-xl"
+                        title="Toggle Screen Theme">
+                    <i class="fas" :class="darkMode ? 'fa-sun text-yellow-400' : 'fa-moon text-indigo-600'"></i>
+                </button>
+                  
+                <a href="{% url 'register' %}" 
+                        :class="darkMode ? 'bg-white text-black' : 'bg-slate-900 text-white'"
+                        class="btn-extreme px-8 py-3 rounded-2xl font-extrabold text-sm uppercase">
+                    Register
+                </a>
+                
+                <a href="{% url 'login' %}" 
+                        :class="darkMode ? 'bg-white text-black' : 'bg-slate-900 text-white'"
+                        class="btn-extreme px-8 py-3 rounded-2xl font-extrabold text-sm uppercase">
+                    Login
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative pt-48 pb-20 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-indigo-500 font-mono tracking-[0.5em] mb-6 text-sm uppercase animate-pulse">Intelligent Workforce Optimization</p>
+            
+            <h1 class="text-6xl md:text-9xl font-extrabold mb-10 tracking-tighter leading-none">
+                Smart Employee <br>
+                <span class="animate-gradient">Wellness & Productivity</span> <br>
+                Assistant
+            </h1>
+
+            <p class="text-gray-400 max-w-3xl mx-auto text-lg md:text-2xl font-light mb-16 leading-relaxed">
+                The apex of AI-driven mental health. Monitoring stress signatures, predicting burnout, and scaling performance through deep learning.
+            </p>
+
+            <div class="flex flex-wrap justify-center gap-8 mb-32">
+                <a href="{% url 'login' %}" class="btn-extreme px-12 py-6 bg-indigo-600 text-white font-bold rounded-[2rem] text-xl group shadow-2xl inline-block text-center">
+                    GET STARTED <i class="fas fa-chevron-right ml-2 group-hover:translate-x-2 transition-transform"></i>
+                </a>
+                <button onclick="document.getElementById('about-section').scrollIntoView({behavior: 'smooth'})" class="btn-extreme px-12 py-6 glass-ultra font-bold rounded-[2rem] text-xl">
+                    ABOUT
+                </button>
+                <button class="btn-extreme px-12 py-6 glass-ultra border-emerald-500/30 text-emerald-500 font-bold rounded-[2rem] text-xl">
+                    AEC <i class="fas fa-microchip ml-2 opacity-50"></i>
+                </button>
+            </div>
+
+            <div class="relative max-w-5xl mx-auto float-xl" id="about-section">
+                <!-- About section content added as requested -->
+                <div class="mt-10 mb-20 text-center">
+                    <h2 class="text-4xl font-extrabold mb-6">About SEWPA</h2>
+                    <p class="text-lg text-gray-400 max-w-3xl mx-auto">SEWPA (Smart Employee Wellness & Productivity Assistant) goes beyond basic HR software. By leveraging modern AI and tracking deep analytics, we aim to transform workspaces into environments that prioritize both peak mental wellness and unparalleled efficiency.</p>
+                </div>
+                
+                <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 rounded-[4rem] blur-2xl opacity-10"></div>
+                <div class="glass-ultra rounded-[3.5rem] p-12 relative overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div class="p-8 glass-ultra rounded-[2rem] hover:scale-105 transition duration-500">
+                            <i class="fas fa-wave-square text-indigo-500 text-2xl mb-4"></i>
+                            <div class="text-4xl font-bold">98.2</div>
+                            <div class="text-xs opacity-50 uppercase tracking-widest mt-2">Stability</div>
+                        </div>
+                        <div class="p-8 glass-ultra rounded-[2rem] hover:scale-105 transition duration-500">
+                            <i class="fas fa-brain text-purple-500 text-2xl mb-4"></i>
+                            <div class="text-4xl font-bold">8.4</div>
+                            <div class="text-xs opacity-50 uppercase tracking-widest mt-2">Focus IQ</div>
+                        </div>
+                        <div class="p-8 glass-ultra rounded-[2rem] hover:scale-105 transition duration-500">
+                            <i class="fas fa-shield-heart text-emerald-500 text-2xl mb-4"></i>
+                            <div class="text-4xl font-bold">Safe</div>
+                            <div class="text-xs opacity-50 uppercase tracking-widest mt-2">Burnout Risk</div>
+                        </div>
+                        <div class="p-8 glass-ultra rounded-[2rem] hover:scale-105 transition duration-500">
+                            <i class="fas fa-chart-line text-yellow-500 text-2xl mb-4"></i>
+                            <div class="text-4xl font-bold">+15%</div>
+                            <div class="text-xs opacity-50 uppercase tracking-widest mt-2">Efficiency</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('nebula-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.z = Math.random() * canvas.width;
+                this.size = 1.2;
+            }
+            update() {
+                this.z -= 1.5; // Speed of star movement
+                if (this.z <= 0) {
+                    this.z = canvas.width;
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                }
+            }
+            draw() {
+                let sx = (this.x - canvas.width / 2) * (canvas.width / this.z) + canvas.width / 2;
+                let sy = (this.y - canvas.height / 2) * (canvas.width / this.z) + canvas.height / 2;
+                let r = (canvas.width / this.z) * this.size;
+                
+                ctx.beginPath();
+                ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                let opacity = 1 - (this.z / canvas.width);
+                // Color shifts slightly based on theme handled in CSS filter, but base is indigo
+                ctx.fillStyle = `rgba(99, 102, 241, ${opacity})`;
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < 450; i++) particles.push(new Star());
+        }
+
+        function animate() {
+            // Logic for trails based on theme
+            ctx.fillStyle = document.body.classList.contains('light-mode') 
+                ? 'rgba(248, 250, 252, 0.2)' 
+                : 'rgba(1, 2, 4, 0.2)';
+            
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        init();
+        animate();
+    </script>
+</body>
+</html>

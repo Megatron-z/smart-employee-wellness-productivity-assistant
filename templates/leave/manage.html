@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if user.role == 'hr' or user.role == 'admin' and not user.is_superuser %}
+    <!-- HR/Admin Personal Leave Quick Links -->
+    <div class="col-12">
+        <div class="dashboard-card p-4 fade-in" style="background: linear-gradient(135deg, #1e293b, #334155); color: white;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-user-gear me-2 text-accent"></i> Personal Leave Management</h5>
+                    <p class="text-light opacity-75 small mb-0">Apply for your own leave or track your personal leave requests.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'apply_leave' %}" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-calendar-plus"></i> Apply for My Leave</a>
+                    <a href="{% url 'leave_tracker' %}" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-clock-rotate-left"></i> My Leave History</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+<br>
+<div class="dashboard-card p-4"
+     style="background: linear-gradient(135deg, #f3e8ff, #ffffff); border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.08);">
+
+    <div class="d-flex justify-content-between align-items-center">
+        
+        <div>
+            <h5 class="fw-bold mb-1" style="color:#4b3f72;">
+                <i class="fa-solid fa-calendar-check me-2" style="color:#7c3aed;"></i>
+                View All Leave History
+            </h5>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'all_leave_history' %}" 
+               class="btn"
+               style="background: linear-gradient(135deg, #4c3aed, #2126b6); color:#fff; border-radius:10px; padding:8px 16px; border:none;">
+               
+                <i class="fa-solid fa-clock-rotate-left me-1"></i>
+                View Leaves
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="dashboard-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Pending Leave Requests</h3>
+        <span class="badge bg-primary px-3 py-2">{{ pending_leaves|length }} Requests</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Employee</th>
+                    <th>Dates</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in pending_leaves %}
+                <tr>
+                    <td>
+                        <div class="fw-bold text-primary">{{ leave.employee.name }}</div>
+                        <div class="small text-muted">{{ leave.employee.emp_id }}</div>
+                    </td>
+                    <td>
+                        <div class="small fw-bold">{{ leave.start_date }} to {{ leave.end_date }}</div>
+                    </td>
+                    <td>
+                        <div class="small text-wrap" style="max-width: 300px;">{{ leave.reason }}</div>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'approve_leave' leave.id 'approved' %}" class="btn btn-sm btn-success px-3">
+                                <i class="fa-solid fa-check-circle me-1"></i> Approve
+                            </a>
+                            <a href="{% url 'approve_leave' leave.id 'rejected' %}" class="btn btn-sm btn-outline-danger px-3" onclick="return confirm('Are you sure you want to REJECT this leave request?');">
+                                <i class="fa-solid fa-times-circle me-1"></i> Reject
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-inbox fa-3xl mb-3 d-block opacity-25"></i>
+                        No pending leave requests.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

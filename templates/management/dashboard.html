@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Top Summary Cards -->
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card p-4 h-100 border-start border-primary border-5">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1">Total Employees</h6>
+                    <h2 class="fw-bold mb-0">{{ total_employees }}</h2>
+                </div>
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card p-4 h-100 border-start border-success border-5">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1">Present Today</h6>
+                    <h2 class="fw-bold mb-0">{{ present_today }}</h2>
+                </div>
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card p-4 h-100 border-start border-warning border-5">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1">On Leave</h6>
+                    <h2 class="fw-bold mb-0">{{ on_leave }}</h2>
+                </div>
+                <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning">
+                    <i class="fa-solid fa-calendar-minus"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card p-4 h-100 border-start border-info border-5">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1">Payroll Snapshot</h6>
+                    <h2 class="fw-bold mb-0">₹{{ total_payroll|floatformat:0 }}</h2>
+                </div>
+                <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  
+
+    <!-- Charts Section -->
+    <div class="col-md-12">
+        <div class="dashboard-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0"><i class="fa-solid fa-chart-line text-primary me-2"></i> Attendance & Leave
+                    Trends (Last 30 Days)</h5>
+            </div>
+            <div style="height: 350px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="dashboard-card p-4">
+            <h5 class="fw-bold mb-4"><i class="fa-solid fa-building-user text-primary me-2"></i> Department-wise
+                Attendance</h5>
+            <div style="height: 300px;">
+                <canvas id="deptBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="dashboard-card p-4 text-center">
+            <h5 class="fw-bold mb-4 text-start"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Workforce
+                Distribution</h5>
+            <div style="height: 300px; max-width: 300px; margin: auto;">
+                <canvas id="deptPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Insights Panels -->
+    <div class="col-md-4">
+        <div class="dashboard-card p-0 h-100">
+            <div class="card-header-styled bg-danger">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> High Stress Warning
+            </div>
+            <div class="p-3">
+                {% for emp in high_stress %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-danger bg-opacity-10 p-2 rounded-circle me-3">
+                        <i class="fa-solid fa-user text-danger"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">{{ emp.name }}</h6>
+                        <span class="extra-small text-danger fw-bold">Stress level detected: Critical</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted small text-center my-3">No critical stress alerts.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card p-0 h-100">
+            <div class="card-header-styled bg-warning text-dark d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-arrow-down-short-wide me-2"></i> Productivity Dips</span>
+
+            </div>
+            <div class="p-3">
+                {% for item in low_prod %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                        <i class="fa-solid fa-user text-warning"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">{{ item.emp.name }}</h6>
+                        <span class="extra-small text-muted">{{ item.reason }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted small text-center my-3">All employees above threshold.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card p-0 h-100">
+            <div class="card-header-styled bg-info text-dark">
+                <i class="fa-solid fa-calendar-xmark me-2"></i> Irregular Attendance
+            </div>
+            <div class="p-3">
+                {% for emp in irregular %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info bg-opacity-10 p-2 rounded-circle me-3">
+                        <i class="fa-solid fa-user text-info"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">{{ emp.name }}</h6>
+                        <span class="extra-small text-muted">Less than 3 check-ins last week</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted small text-center my-3">No irregular patterns detected.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Logs & Pending Leaves -->
+    <div class="col-md-8">
+        <div class="dashboard-card p-4">
+            <h5 class="fw-bold mb-4"><i class="fa-solid fa-clipboard-list text-primary me-2"></i> Daily Attendance Logs
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Verification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in daily_attendance %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ log.employee.name }}</div>
+                                <div class="extra-small text-muted">{{ log.employee.emp_id }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ log.login_time|time:"h:i A" }}</div>
+                                <div class="extra-small text-muted">Out: {{ log.logout_time|time:"h:i A"|default:"--" }}
+                                </div>
+                            </td>
+                            <td>
+                                <span
+                                    class="badge {% if log.is_valid %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10 {% if log.is_valid %}text-success{% else %}text-danger{% endif %}">
+                                    {% if log.is_valid %}Verified{% else %}Flagged{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <i
+                                        class="fa-solid fa-location-dot {% if log.verifications.gps %}text-success{% else %}text-muted{% endif %}"></i>
+                                    <i
+                                        class="fa-solid fa-wifi {% if log.verifications.wifi %}text-success{% else %}text-muted{% endif %}"></i>
+                                    <i
+                                        class="fa-solid fa-face-smile {% if log.verifications.face %}text-success{% else %}text-muted{% endif %}"></i>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No logs recorded today yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 h-100">
+            <h5 class="fw-bold mb-4"><i class="fa-solid fa-calendar-plus text-primary me-2"></i> Recent Leaves</h5>
+            {% for leave in pending_leaves %}
+            <div class="p-3 mb-3 border rounded-3 bg-light">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="fw-bold">{{ leave.employee.name }}</span>
+                    <span class="badge bg-warning bg-opacity-10 text-warning extra-small">Pending</span>
+                </div>
+                <div class="extra-small text-muted mb-2">{{ leave.start_date }} - {{ leave.end_date }}</div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'approve_leave' leave.id 'approved' %}" class="btn btn-sm btn-success flex-grow-1 extra-small"><i class="fa-solid fa-check-circle me-1"></i> Approve</a>
+                    <a href="{% url 'approve_leave' leave.id 'rejected' %}" class="btn btn-sm btn-outline-danger flex-grow-1 extra-small" onclick="return confirm('Reject this leave?');"><i class="fa-solid fa-times-circle me-1"></i> Reject</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <i class="fa-solid fa-check-circle fa-3x text-success opacity-10 mb-3"></i>
+                <p class="text-muted small">All leaves processed!</p>
+            </div>
+            {% endfor %}
+            <a href="{% url 'manage_leaves' %}" class="btn btn-link btn-sm w-100 text-decoration-none">View All Requests
+                <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 1. Dual Trend Chart (Attendance & Leaves)
+    const attendData = JSON.parse('{{ attendance_trends|safe }}');
+    const leaveData = JSON.parse('{{ leave_trends|safe }}');
+
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: attendData.map(d => d.day),
+            datasets: [
+                {
+                    label: 'Attendance',
+                    data: attendData.map(d => d.count),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Approved Leaves',
+                    data: leaveData.map(d => d.count),
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Department-wise Bar Chart
+    const deptAttend = JSON.parse('{{ dept_attendance|safe }}');
+    new Chart(document.getElementById('deptBarChart'), {
+        type: 'bar',
+        data: {
+            labels: deptAttend.map(d => d.dept),
+            datasets: [{
+                label: 'Present (Total 30d)',
+                data: deptAttend.map(d => d.count),
+                backgroundColor: '#3b82f6',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 3. Workforce Doughnut
+    const deptPie = JSON.parse('{{ dept_counts|safe }}');
+    new Chart(document.getElementById('deptPieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: deptPie.map(d => d.department),
+            datasets: [{
+                data: deptPie.map(d => d.count),
+                backgroundColor: ['#3b82f6', '#22d3ee', '#8b5cf6', '#f59e0b', '#ef4444'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+            cutout: '70%'
+        }
+    });
+</script>
+{% endblock %}

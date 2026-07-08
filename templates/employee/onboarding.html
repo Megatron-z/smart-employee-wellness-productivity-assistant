@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="dashboard-card p-5 fade-in">
+            <div class="text-center mb-5">
+                <div class="icon-box bg-primary-soft text-primary mx-auto mb-4" style="width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-face-viewfinder fa-3x"></i>
+                </div>
+                <h2 class="fw-bold text-dark">Complete Your Identity Setup</h2>
+                <p class="text-muted">We need to capture your facial biometric data to enable secure attendance marking and AI diagnostics.</p>
+            </div>
+
+            <form method="POST" id="onboardingForm">
+                {% csrf_token %}
+                <input type="hidden" name="face_data" id="faceDataInput">
+
+                <div class="verification-box p-4 rounded-4 position-relative" style="background: #f8fafc; border: 2px dashed #e2e8f0;">
+                    <div id="webcam-container" style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
+                        <video id="video" autoplay muted class="w-100 h-100" style="object-fit: cover;"></video>
+                        <img id="preview" class="w-100 h-100 d-none" style="object-fit: cover;">
+                        <div id="scan-line" class="position-absolute w-100" style="height: 2px; background: var(--accent); top: 0; left: 0; box-shadow: 0 0 15px var(--accent); transition: top 2s linear; z-index: 10;"></div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button type="button" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold" id="snap" onclick="capturePhoto()">
+                            <i class="fa-solid fa-camera mr-2"></i> Capture My Face
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-lg px-5 py-3 rounded-pill fw-bold d-none" id="retake" onclick="startWebcam()">
+                            <i class="fa-solid fa-redo mr-2"></i> Retake Photo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <button type="submit" class="btn btn-custom btn-lg w-100 py-3 rounded-pill shadow-lg fw-bold" id="submitBtn" disabled>
+                        Complete Setup & Enable Attendance <i class="fa-solid fa-check-circle ms-2"></i>
+                    </button>
+                    <p class="text-center mt-3 text-muted small">By continuing, you agree to biometric data storage for authentication purposes.</p>
+                </div>
+            </form>
+            
+            <canvas id="canvas" width="640" height="480" class="d-none"></canvas>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-primary-soft { background-color: rgba(59, 130, 246, 0.1); }
+    @keyframes scan {
+        0% { top: 0; }
+        100% { top: 100%; }
+    }
+    #scan-line.scanning {
+        animation: scan 2s infinite ease-in-out alternate;
+    }
+</style>
+
+<script>
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let preview = document.getElementById('preview');
+    let faceDataInput = document.getElementById('faceDataInput');
+    let scanLine = document.getElementById('scan-line');
+    let submitBtn = document.getElementById('submitBtn');
+    let stream = null;
+
+    async function startWebcam() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            video.srcObject = stream;
+            video.classList.remove('d-none');
+            preview.classList.add('d-none');
+            preview.src = '';
+            
+            document.getElementById('snap').classList.remove('d-none');
+            document.getElementById('retake').classList.add('d-none');
+            submitBtn.disabled = true;
+            
+            scanLine.classList.add('scanning');
+            scanLine.classList.remove('d-none');
+        } catch (err) {
+            console.error("Webcam Error: ", err);
+            alert("Could not access webcam. Please ensure you have given permission.");
+        }
+    }
+
+    function stopWebcam() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        scanLine.classList.remove('scanning');
+        scanLine.classList.add('d-none');
+    }
+
+    function capturePhoto() {
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, 640, 480);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        faceDataInput.value = dataUrl;
+        
+        preview.src = dataUrl;
+        preview.classList.remove('d-none');
+        video.classList.add('d-none');
+        
+        document.getElementById('snap').classList.add('d-none');
+        document.getElementById('retake').classList.remove('d-none');
+        submitBtn.disabled = false;
+        
+        stopWebcam();
+    }
+
+    // Start webcam on load
+    window.onload = startWebcam;
+</script>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends 'base.html' %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold mb-0 text-warning">
+        <i
+          class="fa-solid fa-file-invoice-dollar me-2"
+          style="color: #d97706"
+        ></i>
+        Calculate Payroll
+      </h4>
+      <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary"
+        ><i class="fa-solid fa-arrow-left me-1"></i> Back</a
+      >
+    </div>
+
+    <div class="dashboard-card p-4">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="row g-3">
+          <!-- Month -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Select Month</label>
+           <input type="month" name="month" id="monthInput"
+       class="form-control"
+       min="{{ current_year }}-01"
+       max="{{ current_year }}-{{ current_month }}"
+       required />
+          
+          </div>
+
+          <!-- Department -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Select Department</label>
+            <select
+              id="deptSelect"
+              name="department"
+              class="form-select"
+              required
+            >
+              <option value="">-- Choose Department --</option>
+              {% if request.user.role == "admin" %}
+              <option value="Human Resources">Human Resources</option>
+              {% endif %}
+              <option value="Engineering">Engineering</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Sales">Sales</option>
+              <option value="Operations">Operations</option>
+            </select>
+          </div>
+
+          <!-- Employee -->
+          <div class="col-md-12">
+            <label class="form-label fw-bold">Select Employee</label>
+            <select id="empSelect" name="emp_id" class="form-select" required>
+              <option value="">-- Choose Employee --</option>
+              {% for emp in employees %}
+              <option
+                value="{{ emp.emp_id }}"
+                data-dept="{{ emp.department }}"
+                data-role="{{ emp.user.role }}"
+              >
+                {{ emp.name }} ({{ emp.emp_id }}) [{{emp.user.role}}]
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 mt-3">
+            <label class="form-label text-muted fw-bold">Basic Salary</label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input
+                type="number"
+                name="basic"
+                id="basic"
+                min="0"
+                step="0.01"
+                class="form-control"
+                required
+                placeholder="5000"
+              />
+            </div>
+          </div>
+          <div class="col-md-6 mt-3">
+            <label class="form-label text-muted fw-bold"
+              >HRA (House Rent Allowance %)</label
+            >
+            <div class="input-group">
+              <span class="input-group-text">%</span>
+              <input
+                type="number"
+                name="hra"
+                id="hra"
+                min="0"
+                max="100"
+                step="0.01"
+                class="form-control"
+                required
+                placeholder="20"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <label class="form-label text-muted fw-bold"
+              >TA (Transport Allowance %)</label
+            >
+            <div class="input-group">
+              <span class="input-group-text">%</span>
+              <input
+                type="number"
+                name="ta"
+                id="ta"
+                min="0"
+                max="100"
+                step="0.01"
+                class="form-control"
+                required
+                placeholder="5"
+              />
+            </div>
+          </div>
+          <div class="col-md-6 mt-3">
+            <label class="form-label text-muted fw-bold"
+              >DA (Dearness Allowance %)</label
+            >
+            <div class="input-group">
+              <span class="input-group-text">%</span>
+              <input
+                type="number"
+                name="da"
+                id="da"
+                min="0"
+                max="100"
+                step="0.01"
+                class="form-control"
+                required
+                placeholder="5"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-12 mt-3">
+            <label class="form-label text-muted fw-bold text-danger"
+              >PF (Provident Fund Deduction %)</label
+            >
+            <div class="input-group">
+              <span class="input-group-text bg-danger text-white border-danger"
+                >- %</span
+              >
+              <input
+                type="number"
+                name="pf"
+                id="pf"
+                min="0"
+                max="100"
+                step="0.01"
+                class="form-control border-danger"
+                required
+                placeholder="10"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-12 mt-3">
+            <label class="form-label text-muted fw-bold text-danger"
+              >LOP (Loss Of Pay) Days
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-danger text-white border-danger"
+                >- ₹</span
+              >
+              <input
+                type="number"
+                name="lop"
+                id="lop"
+                min="0"
+                step="1"
+                class="form-control border-danger"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-12 mt-5 text-end">
+            <button type="submit" class="btn btn-warning fw-bold px-5">
+              <i class="fa-solid fa-calculator me-2"></i> Process & Generate
+              Output
+            </button>
+          </div>
+
+          <div class="col-md-12 mt-5 text-end">
+            {% if last_employee and last_month %}
+            <a
+              href="{% url 'payroll_preview' last_employee last_month %}"
+              class="btn btn-primary"
+            >
+              Preview Payslip
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ JAVASCRIPT -->
+<script>
+  // =========================
+  // 1. FILTER EMPLOYEE BY DEPT
+  // =========================
+  const deptSelect = document.getElementById("deptSelect");
+  const empSelect = document.getElementById("empSelect");
+
+  deptSelect.addEventListener("change", function () {
+    let selectedDept = this.value;
+
+    empSelect.value = "";
+
+    for (let option of empSelect.options) {
+      let empDept = option.getAttribute("data-dept");
+
+      if (option.value === "") {
+        option.style.display = "block";
+      } else if (empDept === selectedDept) {
+        option.style.display = "block";
+      } else {
+        option.style.display = "none";
+      }
+    }
+  });
+
+  // =========================
+  // 2. AUTO FILL PAYROLL DATA
+  // =========================
+  const payrollUrl = "{% url 'get_payroll' 0 %}";
+
+  empSelect.addEventListener("change", function () {
+    let empId = this.value;
+
+    if (!empId) return;
+
+    let url = payrollUrl.replace("0", empId);
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById("basic").value = data.basic;
+          document.getElementById("hra").value = data.hra;
+          document.getElementById("ta").value = data.ta;
+          document.getElementById("da").value = data.da;
+          document.getElementById("pf").value = data.pf;
+          document.getElementById("lop").value = data.lop;
+        }
+      });
+  });
+
+  const monthInput = document.getElementById("monthInput");
+
+  // Get current year-month (YYYY-MM)
+  let today = new Date();
+  let maxMonth = today.toISOString().slice(0, 7);
+
+  // Set max limit
+  monthInput.max = maxMonth;
+  monthInput.min = today.getFullYear() + "-01";
+
+
+</script>
+
+{% endblock %}

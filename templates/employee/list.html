@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold"><i class="fa-solid fa-users text-primary me-2"></i> Employee Directory</h3>
+    <div>
+      
+        <a href="{% url 'payroll_history' %}" class="btn btn-dark me-2"> <i class="fa-solid fa-file"> </i> payroll_history</a>
+        <a href="{% url 'attendance_print' %}" class="btn btn-dark me-2"> <i class="fa-solid fa-file"> </i> Attendance Report</a>
+        <a href="{% url 'print_all' %}" class="btn btn-dark me-2"> <i class="fa-solid fa-file"> </i> Report</a>
+        {% if request.user.role == "hr" %}
+        <a href="{% url 'view_payslip' %}" class="btn btn-success me-2"> <i class="fa-solid fa-file-invoice-dollar"></i> View My Payslip</a>
+        {% endif %}
+        <a href="{% url 'payroll_calc' %}" class="btn btn-outline-warning me-2"><i class="fa-solid fa-file-invoice-dollar"></i> Process Payroll</a>
+        <a href="{% url 'employee_add' %}" class="btn btn-custom"><i class="fa-solid fa-plus me-1"></i> Add Employee</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 h-100 border-start border-4 border-success">
+            <h6 class="text-muted fw-bold small"><i class="fa-solid fa-heart-pulse me-2"></i> ORG WELLNESS</h6>
+            <h2 class="fw-bold mb-0 text-success">{{ avg_wellness }}/100</h2>
+            <p class="text-muted small mt-2 mb-0">Across {{ ranked_employees|length }} employees</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 h-100 border-start border-4 border-danger">
+            <h6 class="text-muted fw-bold small"><i class="fa-solid fa-fire-flame-curved me-2"></i> BURNOUT RISK</h6>
+            <h2 class="fw-bold mb-0 text-danger">{{ high_burnout_count }}</h2>
+            <p class="text-muted small mt-2 mb-0">Employees at high risk</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 h-100 border-start border-4 border-primary">
+            <h6 class="text-muted fw-bold small"><i class="fa-solid fa-trophy me-2"></i> TOP PERFORMER</h6>
+            {% if ranked_employees %}
+            <h5 class="fw-bold mb-0 text-primary">{{ ranked_employees.0.employee.name }}</h5>
+            <p class="text-muted small mt-2 mb-0">Wellness: {{ ranked_employees.0.score }}/100</p>
+            {% else %}
+            <h5 class="fw-bold mb-0 text-muted">N/A</h5>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-card p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">EMP ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Wellness Score</th>
+                    <th class="text-center pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in ranked_employees %}
+                {% with emp=item.employee %}
+                <tr>
+                    <td class="ps-4 fw-bold text-secondary">#{{ emp.emp_id }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3"
+                                style="width: 40px; height: 40px; font-weight: bold;">
+                                {{ emp.name|make_list|first|upper }}
+                            </div>
+                            <div>
+                                <span class="fw-bold text-dark">{{ emp.name }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-secondary opacity-75">{{ emp.department }}</span>
+                        <div class="text-muted small">{{ emp.designation }}</div>
+                    </td>
+
+                   <td>
+                        <span class="badge 
+                                    {% if emp.user.role == 'hr' %}bg-danger
+                                    {% else %}bg-primary{% endif %}">
+                                    {{ emp.user.role|capfirst }}
+                        </span>
+                    </td>
+
+
+                    <td class="text-muted small">{{ emp.joining_date }}</td>
+                    <td>
+                        <div class="fw-bold
+                            {% if item.status == 'Healthy' %}text-success
+                            {% elif item.status == 'Moderate' %}text-primary
+                            {% elif item.status == 'Risk' %}text-warning
+                            {% else %}text-danger{% endif %}">
+                            {{ item.score }}/100
+                        </div>
+                        <div class="small text-muted">{{ item.status }}</div>
+                    </td>
+                    <td class="text-center pe-4">
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{% url 'report_view' emp.emp_id %}"
+                                class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </a>
+                            <a href="{% url 'employee_edit' emp.emp_id %}"
+                                class="btn btn-sm btn-outline-info rounded-pill px-3">
+                                <i class="fa-solid fa-user-pen"></i>
+                            </a>
+                            <form action="{% url 'employee_delete' emp.emp_id %}" method="POST" class="d-inline" onsubmit="return confirm('Delete this employee?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-folder-open fa-3x mb-3 text-light"></i>
+                        <h5>No employees found</h5>
+                        <p>Start by adding a new employee to the system.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+
+<div class="d-flex justify-content-end mb-3">
+    <button onclick="printSection('print-employee')" class="btn btn-primary">
+        <i class="fa fa-print"></i> Print Report
+    </button>
+</div>
+
+<div id="print-employee">
+    <div class="dashboard-card p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <h2>Employee Details</h2>
+
+                <p class="text-end">Printed on: <span id="print-date-emp"></span></p>
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">EMP ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Joined</th>
+                        <th>Wellness Score</th>
+                        <th>Salary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in employee_data %}
+                <tr>
+                    <td class="ps-4 fw-bold text-secondary">#{{ item.emp.emp_id }}</td>
+                    <td>
+                        <div>
+                                <span class="fw-bold text-dark">{{ item.emp.name }}</span>
+                        </div>
+                    </td>
+                    <td>{{ item.emp.department }}</td>
+                    <td>
+                            <div class="text-muted small">{{ item.emp.designation }}</div>
+                    </td>
+        
+                    <td class="text-muted small">{{ item.emp.joining_date }}</td>
+                    <td>
+                        <div class="fw-bold
+                            {% if item.status == 'Healthy' %}text-success
+                            {% elif item.status == 'Moderate' %}text-primary
+                            {% elif item.status == 'Risk' %}text-warning
+                            {% else %}text-danger{% endif %}">
+                            {{ item.score }}/100
+                        </div>
+                        <div class="small text-muted">{{ item.status }}</div>
+                    </td>
+                    <td>₹{{ item.salary }}</td>
+
+                </tr>
+                
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-folder-open fa-3x mb-3 text-light"></i>
+                        <h5>No employees found</h5>
+                        <p>Start by adding a new employee to the system.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+<br>
+{% if request.user.role == 'admin' %}
+
+<div class="d-flex justify-content-end mb-3">
+  <button onclick="printSection('print-hr')" class="btn btn-secondary">
+        <i class="fa fa-print"></i> Print Report
+    </button>
+</div>
+
+<div id="print-hr">
+    
+    <div class="dashboard-card p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <h2>HR Details</h2>
+
+                <p class="text-end">Printed on: <span id="print-date-hr"></span></p>
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">EMP ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Joined</th>
+                        <th>Wellness Score</th>
+                        <th>Salary</th>
+                    </tr>
+                </thead>
+            <tbody>
+               {% for item in hr_data %}
+               
+                <tr>
+                    <td class="ps-4 fw-bold text-secondary">#{{ item.emp.emp_id }}</td>
+                    <td>
+                        
+                            <div>
+                                <span class="fw-bold text-dark">{{ item.emp.name }}</span>
+                            </div>
+                    
+                    </td>
+                    <td>{{ item.emp.department }}</td>
+
+                    <td><div class="text-muted small">{{ item.emp.designation }}</div>
+                    </td>
+                    
+
+                  
+
+                    <td class="text-muted small">{{ item.emp.joining_date }}</td>
+                    <td>
+                        <div class="fw-bold
+                            {% if item.status == 'Healthy' %}text-success
+                            {% elif item.status == 'Moderate' %}text-primary
+                            {% elif item.status == 'Risk' %}text-warning
+                            {% else %}text-danger{% endif %}">
+                            {{ item.score }}/100
+                        </div>
+                        <div class="small text-muted">{{ item.status }}</div>
+                    </td>
+                  <td>₹{{ item.salary }}</td>
+                </tr>
+              
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-folder-open fa-3x mb-3 text-light"></i>
+                        <h5>No employees found</h5>
+                        <p>Start by adding a new employee to the system.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+         </table>
+    
+
+         </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+{% endif %}  
+
+
+
+<script>
+function getDateTime() {
+    return new Date().toLocaleString();
+}
+
+function printSection(id) {
+
+    if (id === 'print-employee') {
+        let empDate = document.getElementById('print-date-emp');
+        if (empDate) empDate.innerText = getDateTime();
+    }
+
+    if (id === 'print-hr') {
+        let hrDate = document.getElementById('print-date-hr');
+        if (hrDate) hrDate.innerText = getDateTime();
+    }
+
+    var section = document.getElementById(id);
+
+    if (!section) {
+        alert("Section not found: " + id);
+        return;
+    }
+
+    var content = section.innerHTML;
+    var printWindow = window.open('', '', 'width=900,height=650');
+
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Print</title>
+            <style>
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid black; padding: 6px; }
+            </style>
+        </head>
+        <body>${content}</body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.print();
+}
+</script>
+
+<style>
+@media print {
+    button {
+        display: none !important;
+    }
+
+    nav, .sidebar, .footer {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #000;
+        padding: 6px;
+    }
+}
+</style>
+
+
+
+{% endblock %}

@@ -1,0 +1,274 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Employee AI Workspace</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles (Trainerize-like) -->
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #3b82f6;
+            --accent: #22d3ee;
+            --light-bg: #f8fafc;
+            --text-main: #334155;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: var(--text-main);
+        }
+
+        .navbar {
+            background-color: var(--primary);
+            padding: 0.8rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #fff !important;
+            letter-spacing: 0.5px;
+            font-size: 1.25rem;
+        }
+
+        .navbar-brand img {
+            height: 36px;
+            width: auto;
+            margin-right: 12px;
+            filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.3));
+        }
+
+        .nav-link {
+            color: #cbd5e1 !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent) !important;
+        }
+
+        .badge-notification {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 4px 6px;
+            border-radius: 50%;
+            background: #f59e0b; /* Yellow bubble */
+            color: #000;
+            font-size: 0.6rem;
+            font-weight: 800;
+            line-height: 1;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+            color: white;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header-styled {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Flash Messages */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        /* Global Placeholder Styling */
+        ::placeholder {
+            color: #cbd5e1 !important;
+            opacity: 1; /* Firefox */
+        }
+
+        :-ms-input-placeholder {
+            color: #cbd5e1 !important;
+        }
+
+        ::-ms-input-placeholder {
+            color: #cbd5e1 !important;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #cbd5e1 !important;
+            font-weight: 400;
+        }
+
+        .extra-small { font-size: 0.65rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    {% if user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{% if user.role == 'admin' or user.role == 'hr' %}{% url 'management_dashboard' %}{% else %}{% url 'employee_dashboard' %}{% endif %}">
+                <img src="{% static 'images/logo.png' %}" alt="Smart Employee AI">
+                Smart Employee AI
+            </a>
+            <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {% if user.role == 'admin' or user.role == 'hr' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'management_dashboard' %}">
+                            <i class="fa-solid fa-chart-pie me-1"></i> Management
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% if user.role == 'admin' or user.role == 'hr' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'pending_approvals' %}">
+                            <i class="fa-solid fa-user-clock me-1"></i> Approvals
+                            {% if pending_approvals_count > 0 %}
+                            <span class="badge-notification">{{ pending_approvals_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% if user.role == 'admin' or user.role == 'hr' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'employee_list' %}">
+                            <i class="fa-solid fa-users-gear me-1"></i> Directory
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% if user.role == 'admin' and user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'system_config' %}" id="nav-config">
+                            <i class="fa-solid fa-gears me-1"></i> Config
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% if user.role != 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'mark_attendance' %}">
+                            <i class="fa-solid fa-clock me-1"></i> Mark Attendance
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.role == 'hr' or user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_leaves' %}">
+                            <i class="fa-solid fa-calendar-check me-1"></i> Leaves
+                            {% if pending_leaves_count > 0 %}
+                            <span class="badge-notification">{{ pending_leaves_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'payroll_calc' %}">
+                            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Payroll
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% if user.role == 'employee' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'employee_dashboard' %}">
+                            <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-link text-white d-flex align-items-center">
+                        <i class="fa-solid fa-user-circle me-2 opacity-75"></i> {{ user.username }}
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-danger ms-3 py-1 px-3 text-white" href="{% url 'logout' %}" style="border-radius: 20px; border-color: #ef4444;">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash Messages Container -->
+    <div class="toast-container">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="toast align-items-center text-bg-{{ message.tags }} border-0 mb-2 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-4 fade-in">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize Toasts automatically
+        document.addEventListener('DOMContentLoaded', function () {
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+            var toastList = toastElList.map(function (toastEl) {
+                return new bootstrap.Toast(toastEl)
+            })
+            toastList.forEach(toast => toast.show());
+        });
+    </script>
+</body>
+</html>

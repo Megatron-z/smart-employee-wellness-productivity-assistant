@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Quick Welcome -->
+    <div class="col-12">
+        {% if not employee.face_embedding %}
+        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center p-4 mb-4 fade-in" style="background: #fffbeb; border-left: 5px solid #f59e0b !important; border-radius: 16px;">
+            <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-4 text-warning">
+                <i class="fa-solid fa-face-viewfinder fa-2x"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-warning mb-1">Incomplete Identity Setup</h5>
+                <p class="text-muted small mb-0">Your facial biometric data is missing. You won't be able to mark attendance until this is resolved.</p>
+                <a href="{% url 'complete_onboarding' %}" class="btn btn-warning btn-sm mt-2 fw-bold px-4 py-2 rounded-pill">Setup My Facial Identity Now</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="dashboard-card p-4 fade-in" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: white;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">Welcome back, {{ employee.name }}!</h2>
+                    <p class="text-light opacity-75 mb-0">{{ employee.designation }} | {{ employee.department }}</p>
+                </div>
+                <div class="text-end">
+                    <div class="d-flex flex-column gap-2">
+                        <span class="badge bg-custom px-3 py-2">ID: {{ employee.emp_id }}</span>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="{% url 'mark_attendance' %}" class="btn btn-sm {% if not employee.face_embedding %}btn-secondary disabled{% else %}btn-outline-light{% endif %}"><i class="fa-solid fa-clock"></i> Mark Attendance</a>
+                            <a href="{% url 'webcam_view' %}" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-face-smile"></i> Scan Wellness through Face</a>
+                            <a href="{% url 'wellness_log' %}" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-heart"></i> Log Wellness</a>
+                            <a href="{% url 'apply_leave' %}" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-calendar-day"></i> Apply Leave</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wellness & Productivity Stats -->
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 text-center fade-in">
+            <h5 class="text-muted small fw-bold text-uppercase mb-3">Overall Wellbeing</h5>
+            <div class="position-relative d-inline-block">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="#f1f5f9" stroke-width="10" />
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="url(#gradient)" stroke-width="10" 
+                            stroke-dasharray="{{ wellness_score|floatformat:0 }} 339" stroke-linecap="round" transform="rotate(-90 60 60)" />
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="position-absolute top-50 start-50 translate-middle">
+                    <h3 class="fw-bold mb-0">{{ wellness_score|floatformat:0 }}</h3>
+                    <span class="small text-muted">/100</span>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="badge {% if wellness_status == 'Healthy' %}bg-success{% elif wellness_status == 'Moderate' %}bg-info{% else %}bg-warning{% endif %} px-3 py-2">
+                    {{ wellness_status }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="row g-4">
+            <div class="col-sm-6">
+                <div class="dashboard-card p-4 fade-in">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3 text-primary">
+                            <i class="fa-solid fa-chart-line fa-xl"></i>
+                        </div>
+                        <h6 class="mb-0 fw-bold">Recent Productivity</h6>
+                    </div>
+                    <div class="h3 fw-bold">{{ prod_score|floatformat:1 }}%</div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-primary" style="width: {{ prod_score }}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="dashboard-card p-4 fade-in">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-danger bg-opacity-10 p-2 rounded-3 me-3 text-danger">
+                            <i class="fa-solid fa-fire fa-xl"></i>
+                        </div>
+                        <h6 class="mb-0 fw-bold">Stress Index</h6>
+                    </div>
+                    <div class="h3 fw-bold text-danger">{{ stress_level|floatformat:1 }}/10</div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-danger" style="width: {{ stress_level|floatformat:0 }}0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="dashboard-card p-4 fade-in">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-lightbulb me-2 text-warning"></i> AI Recommendations</h6>
+                    <div class="alert alert-info border-0 shadow-sm mb-0">
+                        {% if wellness_status == 'Healthy' %}
+                            Maintain your current work-life balance. You're performing optimally!
+                        {% elif wellness_status == 'Moderate' %}
+                            Consider taking short mental breaks every 2 hours to keep focus high.
+                        {% else %}
+                            High mental load detected. We recommend reaching out to HR for workload adjustment.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Section: My Records -->
+            <div class="col-12 mt-4">
+                <h5 class="fw-bold mb-3">My Performance & Records</h5>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="dashboard-card p-4 h-100 text-center border-top border-primary border-4">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block text-primary mb-3">
+                                <i class="fa-solid fa-clock-rotate-left fa-xl"></i>
+                            </div>
+                            <h6 class="fw-bold">Attendance History</h6>
+                            <p class="extra-small text-muted">View your daily clock-in/out logs and verification status.</p>
+                            <a href="{% url 'attendance_history' %}" class="btn btn-sm btn-outline-primary w-100">View Logs</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="dashboard-card p-4 h-100 text-center border-top border-success border-4">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block text-success mb-3">
+                                <i class="fa-solid fa-calendar-check fa-xl"></i>
+                            </div>
+                            <h6 class="fw-bold">Leave Tracker</h6>
+                            <p class="extra-small text-muted">Check status of your applied leaves or apply for a new one.</p>
+                            <a href="{% url 'leave_tracker' %}" class="btn btn-sm btn-outline-success w-100">Track Leaves</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="dashboard-card p-4 h-100 text-center border-top border-info border-4">
+                            <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block text-info mb-3">
+                                <i class="fa-solid fa-file-invoice-dollar fa-xl"></i>
+                            </div>
+                            <h6 class="fw-bold">Salary & Benefits</h6>
+                            <p class="extra-small text-muted">View your detailed payslips and download them as PDF.</p>
+                            <a href="{% url 'view_payslip' %}" class="btn btn-sm btn-outline-info w-100">View Payslip</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+
+    <!-- Month Selector -->
+    <select id="monthSelect" class="form-control mb-3" onchange="showPayslip(this.value)">
+        {% for p in payrolls %}
+            <option value="{{ forloop.counter0 }}">
+                {{ p.month|date:"F Y" }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <div class="col-md-8">
+
+        {% for p in payrolls %}
+        <div class="payslip-item {% if forloop.first %}active{% endif %}"
+             id="payslip-{{ forloop.counter0 }}"
+             {% if not forloop.first %}style="display:none"{% endif %}>
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+                <div>
+                    <h2 class="fw-bold text-primary mb-1">PAYSLIP</h2>
+                    <p class="text-muted small">Month: {{ p.month|date:"F Y" }}</p>
+                </div>
+
+                <div class="text-end">
+                    <h5 class="fw-bold mb-0">Smart Employee AI</h5>
+                    <p class="extra-small text-muted mb-0">Innovation Hub, Tech Park</p>
+                    <p class="extra-small text-muted mb-0">support@smartemployee.ai</p>
+                </div>
+            </div>
+
+            <!-- Employee Info -->
+            <div class="row mb-5 bg-light p-4 rounded-3">
+                <div class="col-sm-6">
+                    <h6 class="text-muted fw-bold text-uppercase mb-2">Employee Details</h6>
+                    <h5 class="fw-bold mb-1">{{ employee.name }}</h5>
+                    <p class="small text-muted mb-0">ID: {{ employee.emp_id }}</p>
+                    <p class="small text-muted mb-0">
+                        {{ employee.designation }} | {{ employee.department }}
+                    </p>
+                </div>
+
+                <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
+                    <h6 class="text-muted fw-bold text-uppercase mb-2">Payment Info</h6>
+                    <p class="small mb-1">
+                        <strong>Joining Date:</strong> {{ employee.joining_date|default:"--" }}
+                    </p>
+                    <p class="small mb-0"><strong>Bank Account:</strong> XXXXXXXXXX1234</p>
+                </div>
+            </div>
+
+            <!-- Earnings & Deductions -->
+            <div class="row g-5">
+
+                <div class="col-sm-6">
+                    <h6 class="fw-bold text-success">EARNINGS</h6>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Basic Salary</span>
+                        <span>₹{{ p.basic|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>HRA</span>
+                        <span>₹{{ p.hra|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>TA</span>
+                        <span>₹{{ p.ta|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>DA</span>
+                        <span>₹{{ p.da|floatformat:2 }}</span>
+                    </div>
+                </div>
+
+                <div class="col-sm-6">
+                    <h6 class="fw-bold text-danger">DEDUCTIONS</h6>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>PF</span>
+                        <span>- ₹{{ p.pf|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>LOP (Days: {{ p.lop_days }})</span>
+                        <span>- ₹{{ p.lop_amount|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Professional Tax</span>
+                        <span>- ₹0.00</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Net Salary -->
+            <div class="mt-5 p-4 rounded-3 d-flex justify-content-between align-items-center"
+                 style="background: linear-gradient(135deg, #0f172a, #1e293b); color: white;">
+
+                <div>
+                    <h6 class="text-uppercase opacity-75 mb-1">Net Payable Amount</h6>
+                    <div class="small">Calculated after all deductions</div>
+                </div>
+
+                <h1 class="fw-bold mb-0">₹{{ p.total_salary|floatformat:2 }}</h1>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-5 text-center no-print">
+                <p class="extra-small text-muted">
+                    * This is a computer generated payslip.
+                </p>
+
+                <button onclick="window.print();" class="btn btn-primary px-4">
+                    Download PDF
+                </button>
+
+                <a href="{% if user.role == 'admin' or user.role == 'hr' %}{% url 'management_dashboard' %}{% else %}{% url 'employee_dashboard' %}{% endif %}" class="btn btn-outline-secondary px-4">
+                    Back to Dashboard
+                </a>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<!-- PRINT FIX -->
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .payslip-item.active,
+    .payslip-item.active * {
+        visibility: visible;
+    }
+
+    .payslip-item.active {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 2cm;
+        background: white;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
+</style>
+
+<!-- JS -->
+ <script>
+function showPayslip(index) {
+    let items = document.querySelectorAll('.payslip-item');
+    items.forEach((item, i) => {
+        item.style.display = (i == index) ? 'block' : 'none';
+        item.classList.toggle('active', i == index); // ✅ ensures print works
+    });
+}
+</script>
+
+
+{% endblock %}

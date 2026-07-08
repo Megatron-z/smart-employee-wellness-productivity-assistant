@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="dashboard-card p-4">
+            <h3 class="fw-bold mb-4"><i class="fa-solid fa-heart-pulse me-2 text-danger"></i> Log Your Wellbeing</h3>
+            <p class="text-muted small">Tracking your mental state and work patterns helps us ensure a healthy work environment.</p>
+
+            <form method="POST" class="mt-4">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-uppercase">How are you feeling today?</label>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="mood" id="mood1" value="Happy" checked>
+                            <label class="btn btn-outline-success w-100 p-3 d-flex flex-column align-items-center justify-content-center" for="mood1" style="min-height: 90px; border-radius: 12px; border-width: 2px;">
+                                <i class="fa-regular fa-face-smile fa-lg mb-2"></i>
+                                <span class="fw-bold extra-small text-uppercase" style="letter-spacing: 0.5px;">Happy</span>
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="mood" id="mood2" value="Neutral">
+                            <label class="btn btn-outline-info w-100 p-3 d-flex flex-column align-items-center justify-content-center" for="mood2" style="min-height: 90px; border-radius: 12px; border-width: 2px;">
+                                <i class="fa-regular fa-face-meh fa-lg mb-2"></i>
+                                <span class="fw-bold extra-small text-uppercase" style="letter-spacing: 0.5px;">Neutral</span>
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="mood" id="mood3" value="Sad">
+                            <label class="btn btn-outline-warning w-100 p-3 d-flex flex-column align-items-center justify-content-center" for="mood3" style="min-height: 90px; border-radius: 12px; border-width: 2px;">
+                                <i class="fa-regular fa-face-sad-tear fa-lg mb-2"></i>
+                                <span class="fw-bold extra-small text-uppercase" style="letter-spacing: 0.5px;">Sad</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Stress Level (1-10)</label>
+                        <input type="number" name="stress_score" class="form-control" min="1" max="10" placeholder="5" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Mental Fatigue (1-10)</label>
+                        <input type="number" name="mental_fatigue" class="form-control" min="1" max="10" placeholder="3" required>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Hours Worked</label>
+                        <input type="number" name="hours_worked" class="form-control" step="0.5" placeholder="8" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Break Time (Hours)</label>
+                        <input type="number" name="break_time" class="form-control" step="0.1" placeholder="1" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-custom w-100 py-3 fw-bold">
+                    Submit Wellness Log
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

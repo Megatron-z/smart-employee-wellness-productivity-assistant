@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    body.login-body {
+        background: url('/static/images/login_background.png') no-repeat center center fixed;
+        background-size: cover;
+        position: relative;
+    }
+    body.login-body::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.7);
+        z-index: -1;
+    }
+    .register-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        max-width: 800px;
+        margin: auto;
+    }
+    .role-toggle {
+        background: #f1f5f9;
+        border-radius: 12px;
+        padding: 5px;
+        display: inline-flex;
+    }
+    .role-btn {
+        padding: 8px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        border: none;
+    }
+    .role-btn.active {
+        background: white;
+        color: var(--secondary);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    #webcam-container {
+        width: 100%;
+        max-width: 400px;
+        aspect-ratio: 4/3;
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden;
+        margin: auto;
+        position: relative;
+    }
+    #video { width: 100%; height: 100%; object-fit: cover; }
+    #canvas { display: none; }
+    .captured-preview {
+        width: 100%;
+        max-width: 200px;
+        border-radius: 12px;
+        display: none;
+        margin: 10px auto;
+        border: 4px solid var(--accent);
+    }
+</style>
+
+<div class="row justify-content-center align-items-center py-5">
+
+  <div style="position: fixed; top: 20px; left: 20px; z-index: 1050;">
+    <a href="{% url 'home' %}" class="btn btn-light shadow-sm rounded-pill px-3 py-2">
+        <i class="fa-solid fa-arrow-left me-2"></i> Home
+    </a>
+</div>
+
+    <div class="col-lg-10">
+        <div class="register-card p-5 fade-in">
+            <div class="text-center mb-5">
+                <img src="/static/images/smart_employee_logo.png" alt="Logo" style="width: 80px; margin-bottom: 20px;">
+                <h2 class="fw-bold text-dark">Join Smart Employee AI</h2>
+                <p class="text-muted">Create your account and become part of our intelligent workspace</p>
+                
+                <div class="role-toggle mt-4">
+                    <button type="button" class="role-btn active" id="btn-employee" onclick="setRole('employee')">I am an Employee</button>
+                    <button type="button" class="role-btn" id="btn-hr" onclick="setRole('hr')">I am an HR Manager</button>
+                </div>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" id="registerForm">
+                {% csrf_token %}
+                <input type="hidden" name="role" id="roleInput" value="employee">
+                <input type="hidden" name="face_data" id="faceDataInput">
+
+                <div class="row g-4">
+                    <!-- Standard Fields -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted">FULL NAME</label>
+                        <input type="text" name="name" class="form-control" required placeholder="John Doe">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted">USERNAME</label>
+                        <input type="text" name="username" class="form-control" required placeholder="johndoe123">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted">EMAIL ADDRESS</label>
+                                       
+                        <input type="email" name="email" class="form-control" required placeholder="john@company.com" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted">PASSWORD</label>
+
+                    <div class="input-group">
+        <!-- Lock icon -->
+        <span class="input-group-text bg-white border-end-0">
+            <i class="fa-solid fa-lock text-primary"></i>
+        </span>
+
+        <!-- Password input -->
+        <input type="password" id="passwordField" name="password"
+               class="form-control border-start-0 border-end-0 py-3"
+               required placeholder="••••••••">
+
+        <!-- Eye icon -->
+        <span class="input-group-text bg-white border-start-0" style="cursor: pointer;" onclick="togglePassword()">
+            <i id="toggleIcon" class="fa-solid fa-eye"></i>
+        </span>
+    </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted">DEPARTMENT</label>
+                        <select name="department" class="form-select" required>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted">DESIGNATION</label>
+                        <input type="text" name="designation" class="form-control" required placeholder="Software Engineer">
+                    </div>
+
+                    <!-- Role Specific Content -->
+                    <div class="col-12 mt-5">
+                        <div id="employee-section">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-camera me-2 text-primary"></i>Facial Identity Capture</h5>
+                            <p class="text-muted small">We use facial recognition for secure attendance. Please capture your face using your webcam.</p>
+                            
+                            <div id="webcam-container">
+                                <video id="video" autoplay muted></video>
+                                <div id="capture-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px dashed var(--accent); pointer-events: none; opacity: 0.5;"></div>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-dark" id="snap" onclick="capturePhoto()">
+                                    <i class="fa-solid fa-camera mr-2"></i> Capture My Face
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="retake" onclick="startWebcam()" style="display: none;">
+                                    <i class="fa-solid fa-redo mr-2"></i> Retake
+                                </button>
+                            </div>
+                            
+                            <img id="preview" class="captured-preview">
+                            <canvas id="canvas" width="640" height="480"></canvas>
+                        </div>
+
+                        <div id="admin-section" style="display: none;">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-image me-2 text-primary"></i>Profile Picture Upload</h5>
+                            <p class="text-muted small">As an HR Admin, please upload a professional profile picture.</p>
+                            <input type="file" name="profile_pic" class="form-control py-3" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="col-12 text-center mt-5">
+                        <button type="submit" class="btn btn-custom btn-lg w-100 py-3">Submit Registration <i class="fa-solid fa-paper-plane ms-2"></i></button>
+                        <p class="mt-4 text-muted small">Already have an account? <a href="{% url 'login' %}" class="text-primary fw-bold">Login here</a></p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function togglePassword() {
+    const passwordField = document.getElementById("passwordField");
+    const icon = document.getElementById("toggleIcon");
+
+    if (passwordField.type === "password") {
+        passwordField.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        passwordField.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+
+
+
+    document.body.classList.add('login-body');
+    
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let preview = document.getElementById('preview');
+    let faceDataInput = document.getElementById('faceDataInput');
+    let stream = null;
+
+    function setRole(role) {
+        document.getElementById('roleInput').value = role;
+        document.getElementById('btn-employee').classList.toggle('active', role === 'employee');
+        document.getElementById('btn-hr').classList.toggle('active', role === 'hr');
+        
+        document.getElementById('employee-section').style.display = (role === 'employee' || role === 'hr') ? 'block' : 'none';
+        document.getElementById('admin-section').style.display = 'none';
+        
+        if (role === 'employee' || role === 'hr') {
+            startWebcam();
+        } else {
+            stopWebcam();
+        }
+    }
+
+    async function startWebcam() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            preview.style.display = 'none';
+            document.getElementById('snap').style.display = 'inline-block';
+            document.getElementById('retake').style.display = 'none';
+        } catch (err) {
+            console.error("Webcam Error: ", err);
+            alert("Could not access webcam. Please ensure you have given permission.");
+        }
+    }
+
+    function stopWebcam() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+    }
+
+    function capturePhoto() {
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, 640, 480);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        faceDataInput.value = dataUrl;
+        
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        video.style.display = 'none';
+        
+        document.getElementById('snap').style.display = 'none';
+        document.getElementById('retake').style.display = 'inline-block';
+        
+        stopWebcam();
+    }
+
+    // Start webcam on load for default employee role
+    window.onload = startWebcam;
+</script>
+{% endblock %}

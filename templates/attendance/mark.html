@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="dashboard-card p-4">
+            <h3 class="fw-bold mb-4"><i class="fa-solid fa-id-card-clip me-2 text-primary"></i> Mark Attendance</h3>
+            
+            <!-- Step Progress -->
+            <div class="d-flex justify-content-between mb-4 position-relative">
+                <div class="step-indicator active" id="step1-dot">1</div>
+                <div class="step-indicator" id="step2-dot">2</div>
+                <div class="step-indicator" id="step3-dot">3</div>
+                <div class="progress position-absolute top-50 start-0 translate-middle-y w-100" style="height: 2px; z-index: -1;">
+                    <div class="progress-bar" id="step-progress" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div id="status-container" class="mb-4">
+                <!-- Status alerts injected here -->
+            </div>
+
+            <!-- Step 1: Environment Check -->
+            <div id="step1" class="verification-step">
+                <h5 class="fw-bold mb-3">Step 1: Work Environment</h5>
+                <p class="text-muted small">We need to verify you are currently at the office location and connected to the official network.</p>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Office WiFi SSID</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-wifi"></i></span>
+                        <input type="text" id="wifi_ssid" class="form-control" placeholder="Enter connected WiFi SSID" value="{{ config.office_wifi_ssid }}">
+                    </div>
+                </div>
+                
+                <button onclick="checkEnvironment()" class="btn btn-custom w-100 py-2 mt-2" id="env-btn">
+                    <i class="fa-solid fa-location-dot me-2"></i> Verify Location & WiFi
+                </button>
+            </div>
+
+            <!-- Step 2: Facial Recognition -->
+            <div id="step2" class="verification-step d-none">
+                <h5 class="fw-bold mb-3">Step 2: Identity Verification</h5>
+                <p class="text-muted small">Please look directly into the camera. We'll verify your identity and check for liveness.</p>
+                
+                <div class="webcam-container mb-3 position-relative" style="background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 4/3;">
+                    <video id="video" autoplay playsinline class="w-100 h-100" style="object-fit: cover;"></video>
+                    <canvas id="canvas" class="d-none"></canvas>
+                    <div id="liveness-overlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center text-white" style="background: rgba(0,0,0,0.3); pointer-events: none;">
+                        <div class="instruction-box bg-dark bg-opacity-75 p-3 rounded-pill">
+                             <span id="instruction-text">Center your face in the frame</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="captureAndVerify()" class="btn btn-custom w-100 py-2 mt-2" id="face-btn">
+                    <i class="fa-solid fa-camera me-2"></i> Capture & Verify Identity
+                </button>
+            </div>
+
+            <div id="step3" class="verification-step d-none text-center">
+                <div id="verification-status-icon" class="mb-4">
+                    <i class="fa-solid fa-hourglass-half text-warning" style="font-size: 5rem;"></i>
+                </div>
+                <h4 id="verification-title" class="fw-bold">Ready to Check In</h4>
+                <p id="verification-text" class="text-muted">Identity captured. Click below to perform final verification and record your attendance.</p>
+
+                <div class="d-flex flex-column align-items-center mb-4 d-none" id="wellness-result">
+                    <div class="p-3 rounded-4 bg-light w-100 border border-info border-opacity-25 text-start">
+                        <p class="text-info extra-small fw-bold text-uppercase mb-3"><i class="fa-solid fa-microchip me-1"></i> AI Wellness Check</p>
+                        <div class="row align-items-center mb-4 g-0">
+                            <div class="col-7">
+                                <span class="text-muted extra-small fw-bold text-uppercase">Primary Emotion</span>
+                                <h3 class="fw-bold mb-0 text-primary" id="detected-emotion">--</h3>
+                                <div class="badge bg-info bg-opacity-10 text-info extra-small mt-1 px-2 py-1 rounded-pill" id="wellness-status-text">--</div>
+                            </div>
+                            <div class="col-5 text-end">
+                                <span class="text-muted extra-small fw-bold text-uppercase">Stress Score</span>
+                                <h3 class="fw-bold mb-0" id="stress-level-display">--/10</h3>
+                            </div>
+                        </div>
+                        
+                        <div id="attendance-emotion-bars" class="mt-2">
+                            <!-- Bars injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mb-3">
+                    <button onclick="submitAttendance('check_in')" class="btn btn-success flex-grow-1 py-3 fw-bold" id="checkin-btn">
+                        Check In
+                    </button>
+                    <button onclick="submitAttendance('check_out')" class="btn btn-outline-danger flex-grow-1 py-3 fw-bold" id="checkout-btn">
+                        Check Out
+                    </button>
+                </div>
+                
+                <button onclick="resetVerification()" class="btn btn-link text-muted small d-none" id="retry-link">
+                    <i class="fa-solid fa-redo me-1"></i> Start over if verification fails
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .step-indicator {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+        z-index: 1;
+    }
+    .step-indicator.active {
+        background: var(--secondary);
+        color: white;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+    .step-indicator.complete {
+        background: #22c55e;
+        color: white;
+        border-color: #22c55e;
+    }
+    .verification-step {
+        animation: slideIn 0.4s ease-out;
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .extra-small { font-size: 0.65rem; }
+    .progress-minimal {
+        height: 6px;
+        background-color: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .progress-minimal .progress-bar {
+        border-radius: 10px;
+        transition: width 1s ease-in-out;
+    }
+    .emotion-row-small {
+        margin-bottom: 8px;
+    }
+    .emotion-label-small {
+        font-weight: 600;
+        color: #64748b;
+        text-transform: capitalize;
+        font-size: 0.75rem;
+    }
+</style>
+
+<script>
+    let userData = {
+        lat: null,
+        lon: null,
+        wifi_ssid: '',
+        face_image: null,
+        wellness: {
+            mood: 'Neutral',
+            stress_score: 5
+        }
+    };
+
+    function showStatus(msg, type = 'info') {
+        const container = document.getElementById('status-container');
+        container.innerHTML = `
+            <div class="alert alert-${type} border-0 shadow-sm fade show mb-0">
+                <i class="fa-solid ${type === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-info'} me-2"></i>
+                ${msg}
+            </div>
+        `;
+    }
+
+    // Step 1: Environment
+    function checkEnvironment() {
+        const wifi = document.getElementById('wifi_ssid').value;
+        if (!wifi) return showStatus('Please enter the connected WiFi SSID.', 'danger');
+        
+        userData.wifi_ssid = wifi;
+        const btn = document.getElementById('env-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Locating...';
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(position => {
+                userData.lat = position.coords.latitude;
+                userData.lon = position.coords.longitude;
+                
+                // Advance to Step 2
+                document.getElementById('step1').classList.add('d-none');
+                document.getElementById('step2').classList.remove('d-none');
+                document.getElementById('step1-dot').classList.add('complete');
+                document.getElementById('step2-dot').classList.add('active');
+                document.getElementById('step-progress').style.width = '50%';
+                
+                startCamera();
+                showStatus('Location captured. Now verifying identity.', 'success');
+            }, error => {
+                showStatus('Geolocation access denied. Please allow location to proceed.', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-dot me-2"></i> Verify Location & WiFi';
+            });
+        } else {
+            showStatus('Geolocation is not supported by your browser.', 'danger');
+        }
+    }
+
+    // Camera handling
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    async function startCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        } catch (err) {
+            showStatus('Webcam access failed. Check permissions.', 'danger');
+        }
+    }
+
+    async function captureAndVerify() {
+        const btn = document.getElementById('face-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Analyzing face...';
+
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        
+        userData.face_image = canvas.toDataURL('image/jpeg');
+        
+        // Concurrent Identity and Wellness check
+        try {
+            const response = await fetch("{% url 'emotion_analyze_api' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: userData.face_image })
+            });
+            const data = await response.json();
+            
+            if (!data.error) {
+                userData.wellness = {
+                    mood: data.emotion,
+                    stress_score: data.stress_score
+                };
+                
+                // Update UI with wellness data
+                const wellnessDiv = document.getElementById('wellness-result');
+                wellnessDiv.classList.remove('d-none');
+                document.getElementById('detected-emotion').innerText = data.emotion;
+                document.getElementById('wellness-status-text').innerText = data.interpretation;
+                document.getElementById('stress-level-display').innerText = data.stress_score + '/10';
+
+                // Render Emotion Bars
+                const barsContainer = document.getElementById('attendance-emotion-bars');
+                barsContainer.innerHTML = '';
+                
+                if(data.raw_scores) {
+                    const sortedEmotions = Object.entries(data.raw_scores).sort((a,b) => b[1] - a[1]).slice(0, 4); // Top 4
+                    
+                    sortedEmotions.forEach(([emotion, score]) => {
+                        const row = document.createElement('div');
+                        row.className = 'emotion-row-small';
+                        
+                        let color = 'bg-primary';
+                        if(['angry', 'fear'].includes(emotion)) color = 'bg-danger';
+                        if(emotion === 'happy') color = 'bg-success';
+                        
+                        row.innerHTML = `
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="emotion-label-small">${emotion}</span>
+                                <span class="extra-small fw-bold">${score}%</span>
+                            </div>
+                            <div class="progress-minimal">
+                                <div class="progress-bar ${color}" style="width: 0%"></div>
+                            </div>
+                        `;
+                        barsContainer.appendChild(row);
+                        setTimeout(() => {
+                            row.querySelector('.progress-bar').style.width = score + '%';
+                        }, 50);
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Wellness check failed:", err);
+        }
+
+        document.getElementById('step2').classList.add('d-none');
+        document.getElementById('step3').classList.remove('d-none');
+        document.getElementById('step2-dot').classList.add('complete');
+        document.getElementById('step3-dot').classList.add('active');
+        document.getElementById('step-progress').style.width = '100%';
+        
+        // Stop camera
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+    }
+
+    function resetVerification() {
+        userData.lat = null;
+        userData.lon = null;
+        userData.wifi_ssid = '';
+        userData.face_image = null;
+        
+        document.getElementById('step3').classList.add('d-none');
+        document.getElementById('step1').classList.remove('d-none');
+        document.getElementById('step3-dot').classList.remove('active', 'complete');
+        document.getElementById('step2-dot').classList.remove('active', 'complete');
+        document.getElementById('step1-dot').classList.add('active');
+        document.getElementById('step1-dot').classList.remove('complete');
+        document.getElementById('step-progress').style.width = '0%';
+        
+        document.getElementById('env-btn').disabled = false;
+        document.getElementById('env-btn').innerHTML = '<i class="fa-solid fa-location-dot me-2"></i> Verify Location & WiFi';
+        
+        document.getElementById('status-container').innerHTML = '';
+        document.getElementById('retry-link').classList.add('d-none');
+        
+        // Reset Wellness UI
+        document.getElementById('wellness-result').classList.add('d-none');
+        document.getElementById('detected-emotion').innerText = '--';
+        document.getElementById('wellness-status-text').innerText = '--';
+        document.getElementById('stress-level-display').innerText = '--/10';
+
+        // Reset Step 3 UI
+        document.getElementById('verification-status-icon').innerHTML = '<i class="fa-solid fa-hourglass-half text-warning" style="font-size: 5rem;"></i>';
+        document.getElementById('verification-title').innerText = 'Ready to Check In';
+        document.getElementById('verification-text').innerText = 'Identity captured. Click below to perform final verification and record your attendance.';
+    }
+
+    // Final Submission
+    async function submitAttendance(action) {
+        const checkinBtn = document.getElementById('checkin-btn');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        
+        checkinBtn.disabled = true;
+        checkoutBtn.disabled = true;
+        
+        showStatus(`Verifying and submitting ${action}...`, 'info');
+        
+        try {
+            const response = await fetch('{% url "verify_attendance_api" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...userData, action: action })
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                // Update Step 3 to Success State
+                document.getElementById('verification-status-icon').innerHTML = '<i class="fa-solid fa-circle-check text-success" style="font-size: 5rem;"></i>';
+                document.getElementById('verification-title').innerText = 'Attendance Marked!';
+                document.getElementById('verification-text').innerText = `Your ${action} has been successfully recorded.`;
+                document.getElementById('step3-dot').classList.add('complete');
+                
+                showStatus(`${action} successful! Redirecting...`, 'success');
+                setTimeout(() => window.location.href = '{% url "employee_dashboard" %}', 2000);
+            } else {
+                checkinBtn.disabled = false;
+                checkoutBtn.disabled = false;
+                
+                // Show specific error and update UI to failure state
+                let errorMsg = `Verification Failed: ${result.error}`;
+                let subText = 'One or more security factors could not be verified.';
+                
+                if (result.error.toLowerCase().includes('facial data')) {
+                    errorMsg = 'Identity Setup Required';
+                    subText = 'You haven\'t completed your facial identity setup yet. Please contact HR or update your profile with a clear photo.';
+                }
+                
+                showStatus(errorMsg, 'danger');
+                document.getElementById('verification-status-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-danger" style="font-size: 5rem;"></i>';
+                document.getElementById('verification-title').innerText = errorMsg;
+                document.getElementById('verification-text').innerText = subText;
+                document.getElementById('retry-link').classList.remove('d-none');
+            }
+        } catch (err) {
+            checkinBtn.disabled = false;
+            checkoutBtn.disabled = false;
+            showStatus('Error communicating with server.', 'danger');
+        }
+    }
+</script>
+{% endblock %}

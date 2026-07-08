@@ -1,0 +1,23 @@
+#python 3.12.10
+django>=5.0
+pandas
+scikit-learn
+numpy
+xgboost
+catboost
+lightgbm
+joblib
+matplotlib
+seaborn
+deepface
+opencv-python
+Pillow
+tf-keras
+tensorflow
+mediapipe
+django-cors-headers
+django-environ
+python-dotenv
+requests
+bcrypt
+pyjwt

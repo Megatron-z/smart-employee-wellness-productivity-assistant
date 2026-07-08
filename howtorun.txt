@@ -1,0 +1,54 @@
+
+▶️ How to Run This Project Locally
+
+Follow these steps to run the application on your system.
+
+▶️Install Python 3.12.10
+link: https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe
+
+1️⃣ Install Visual Studio(VS Code) from official page
+
+--> Open Project Folder in VS Code
+
+Open Visual Studio Code
+Click File → Open Folder
+Select the project folder and open it.
+
+--> Go to Terminal in Menu, Click on "New Terminal", recommended is "CMD"
+
+2️⃣ Create Virtual Environment
+
+Open the VS Code terminal and run:
+
+py -3.12 -m venv venv
+
+3️⃣ Activate Virtual Environment
+
+venv\Scripts\activate
+
+4️⃣ Install Required Packages
+
+
+pip install -r requirements.txt
+
+▶️ To get the GPS location
+Run python gps.py 
+
+4. DATABASE SETUP (MIGRATIONS)
+   If you have made changes to models or are running for the first time:
+   venv\Scripts\python manage.py makemigrations 
+   venv\Scripts\python manage.py migrate
+
+5. INITIALIZE ADMIN & SYSTEM
+   Run the following script to create the 'admin' user and default configuration:
+   venv\Scripts\python init_admin.py
+   
+
+6. RUN SERVER
+   venv\Scripts\python manage.py runserver
+
+7. LOGIN
+   Go to: http://127.0.0.1:8000/
+
+   Username: admin
+   Password: admin

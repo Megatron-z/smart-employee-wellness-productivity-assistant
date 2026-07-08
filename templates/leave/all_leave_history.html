@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1 class="mb-3">Leave History Report</h1>
+
+<div class="d-flex justify-content-end mb-3">
+    <form method="get" class="d-flex gap-2">
+        Date:
+        <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+        <button type="submit" class="btn btn-success">Filter</button>
+    </form>
+</div>
+
+<!-- EMPLOYEE REPORT -->
+<div class="d-flex justify-content-end mb-3">
+    <button onclick="printSection('print-employee')" class="btn btn-primary">
+        <i class="fa fa-print"></i> Print Employee Report
+    </button>
+</div>
+
+<div id="print-employee">
+    <h2>Employee Leave History Report</h2>
+    <p id="print-date-emp" class="text-end">
+        Date: {{ selected_date|date:"d M Y" }}
+    </p>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Role</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Reason</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in employee_leaves %}
+            <tr>
+                <td>{{ leave.employee.name }}</td>
+                <td>{{ leave.employee.user.role }}</td>
+                <td>{{ leave.start_date }}</td>
+                <td>{{ leave.end_date }}</td>
+                <td>{{ leave.reason }}</td>
+                <td>{{ leave.status }}</td>
+            </tr>
+            
+            {% empty %}
+            <tr>
+                <td colspan="6">No records found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<br>
+
+<!-- HR REPORT (ONLY ADMIN) -->
+{% if request.user.role == 'admin' %}
+
+<div class="d-flex justify-content-end mb-3">
+    <button onclick="printSection('print-hr')" class="btn btn-secondary">
+        <i class="fa fa-print"></i> Print HR Report
+    </button>
+</div>
+
+<div id="print-hr">
+    <h2>HR Leave History Report</h2>
+    <p id="print-date-hr" class="text-end">
+        Date: {{ selected_date|date:"d M Y" }}
+    </p>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Role</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Reason</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in hr_leaves %}
+            <tr>
+                <td>{{ leave.employee.name }}</td>
+                <td>{{ leave.employee.user.role }}</td>
+                <td>{{ leave.start_date }}</td>
+                <td>{{ leave.end_date }}</td>
+                <td>{{ leave.reason }}</td>
+                <td>{{ leave.status }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No records found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endif %}
+
+<!-- PRINT SCRIPT -->
+<script>
+function getDateTime() {
+    return new Date().toLocaleString();
+}
+
+function printSection(id) {
+    let dateId = id === 'print-employee' ? 'print-date-emp' : 'print-date-hr';
+    let dateElement = document.getElementById(dateId);
+    if (dateElement) dateElement.innerText = "Printed: " + getDateTime();
+
+    let content = document.getElementById(id).innerHTML;
+
+    let win = window.open('', '', 'width=900,height=650');
+    win.document.write(`
+        <html>
+        <head>
+            <title>Print</title>
+            <style>
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid black; padding: 6px; }
+            </style>
+        </head>
+        <body>${content}</body>
+        </html>
+    `);
+
+    win.document.close();
+    win.print();
+}
+</script>
+
+{% endblock %}
